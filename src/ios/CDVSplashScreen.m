@@ -171,6 +171,12 @@
 {
     // Use UILaunchImageFile if specified in plist.  Otherwise, use Default.
     NSString* imageName = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"UILaunchImageFile"];
+    NSArray* imageNames = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"UILaunchImageFiles"];
+    
+    if ( imageNames )
+    {
+        imageName = [ imageNames objectAtIndex: arc4random_uniform( imageNames.count ) ];
+    }
     
     NSUInteger supportedOrientations = [orientationDelegate supportedInterfaceOrientations];
     
