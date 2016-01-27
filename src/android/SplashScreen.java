@@ -30,17 +30,19 @@ import android.view.Display;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.view.WindowManager;
-import android.view.animation.Animation;
 import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CordovaWebView;
 import org.json.JSONArray;
 import org.json.JSONException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SplashScreen extends CordovaPlugin {
     private static final String LOG_TAG = "SplashScreen";
@@ -71,6 +73,45 @@ public class SplashScreen extends CordovaPlugin {
         }
     }
 
+   private int loadSplashList( int splashId )
+   {
+      // check that we have not loaded already
+      int drawableId = preferences.getInteger( "SplashDrawableId", 0 );
+      if( drawableId == 0 )
+      {
+         String splashResource = preferences.getString( "SplashScreen" + splashId, null );
+         if( splashResource != null )
+         {
+            drawableId = cordova.getActivity().getResources().getIdentifier( splashResource, "drawable", cordova.getActivity().getClass().getPackage().getName() );
+            if( drawableId == 0 )
+            {
+               drawableId = cordova.getActivity().getResources().getIdentifier( splashResource, "drawable", cordova.getActivity().getPackageName() );
+            }
+            preferences.set( "SplashDrawableId" + splashId, drawableId );
+         }
+      }
+      return drawableId;
+   }
+
+   private List<Integer> loadAllSplashes()
+   {
+      List<Integer> list = new ArrayList<Integer>();
+      int i = 0;
+      while( true )
+      {
+         int drawableId = loadSplashList( i++ );
+         if( drawableId != 0 )
+         {
+            list.add( drawableId );
+         }
+         else
+         {
+            break;
+         }
+      }
+      return list;
+   }
+
     @Override
     protected void pluginInitialize() {
         if (HAS_BUILT_IN_SPLASH_SCREEN) {
@@ -78,17 +119,8 @@ public class SplashScreen extends CordovaPlugin {
         }
         // Make WebView invisible while loading URL
         getView().setVisibility(View.INVISIBLE);
-        int drawableId = preferences.getInteger("SplashDrawableId", 0);
-        if (drawableId == 0) {
-            String splashResource = preferences.getString("SplashScreen", "screen");
-            if (splashResource != null) {
-                drawableId = cordova.getActivity().getResources().getIdentifier(splashResource, "drawable", cordova.getActivity().getClass().getPackage().getName());
-                if (drawableId == 0) {
-                    drawableId = cordova.getActivity().getResources().getIdentifier(splashResource, "drawable", cordova.getActivity().getPackageName());
-                }
-                preferences.set("SplashDrawableId", drawableId);
-            }
-        }
+        List<Integer> splashIds = loadAllSplashes();
+        preferences.set( "SplashDrawableCount" , splashIds.size() );
 
         // Save initial orientation.
         orientation = cordova.getActivity().getResources().getConfiguration().orientation;
@@ -254,13 +286,22 @@ public class SplashScreen extends CordovaPlugin {
         });
     }
 
+   private int getRandomSplashDrawableId()
+   {
+      int splashCount = preferences.getInteger("SplashDrawableCount", 0 );
+      if( splashCount == 0 )
+         return 0;
+      int randomId = ( int ) (Math.random() * splashCount + 0.5 );
+      return preferences.getInteger("SplashDrawableId" + randomId, 0);
+   }
+
     /**
      * Shows the splash screen over the full Activity
      */
     @SuppressWarnings("deprecation")
     private void showSplashScreen(final boolean hideAfterDelay) {
         final int splashscreenTime = preferences.getInteger("SplashScreenDelay", DEFAULT_SPLASHSCREEN_DURATION);
-        final int drawableId = preferences.getInteger("SplashDrawableId", 0);
+        final int drawableId = getRandomSplashDrawableId();
 
         final int fadeSplashScreenDuration = getFadeDuration();
         final int effectiveSplashDuration = splashscreenTime - fadeSplashScreenDuration;
