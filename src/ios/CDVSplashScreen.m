@@ -427,6 +427,7 @@
         else if (fadeDuration == 0 && splashDuration == 0)
         {
             [self destroyViews];
+            selectedImage = NULL;
         }
         else
         {
@@ -442,6 +443,7 @@
                                    completion:^(BOOL finished) {
                                        if (finished) {
                                            [weakSelf destroyViews];
+                                           selectedImage = NULL;
                                            // TODO: It might also be nice to have a js event happen here -jm
                                        }
                                      }
