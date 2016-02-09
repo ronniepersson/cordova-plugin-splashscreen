@@ -432,8 +432,7 @@
         else
         {
             __weak __typeof(self) weakSelf = self;
-            float effectiveSplashDuration = (splashDuration - fadeDuration) / 1000;
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (uint64_t) effectiveSplashDuration * NSEC_PER_SEC), dispatch_get_main_queue(), CFBridgingRelease(CFBridgingRetain(^(void) {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (uint64_t) 0 * NSEC_PER_SEC), dispatch_get_main_queue(), CFBridgingRelease(CFBridgingRetain(^(void) {
                    [UIView transitionWithView:self.viewController.view
                                    duration:(fadeDuration / 1000)
                                    options:UIViewAnimationOptionTransitionNone
