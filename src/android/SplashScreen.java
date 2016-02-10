@@ -30,6 +30,7 @@ import android.view.Display;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.view.WindowManager;
+import android.view.animation.AccelerateInterpolator;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.DecelerateInterpolator;
@@ -319,56 +320,86 @@ public class SplashScreen extends CordovaPlugin {
                 // Get reference to display
                 Display display = cordova.getActivity().getWindowManager().getDefaultDisplay();
                 Context context = webView.getContext();
+               // Use an ImageView to render the image because of its flexible scaling options.
+               splashImageView = new ImageView(context);
+               splashImageView.setImageResource(drawableId);
+               LayoutParams layoutParams = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+               splashImageView.setLayoutParams(layoutParams);
 
-                // Use an ImageView to render the image because of its flexible scaling options.
-                splashImageView = new ImageView(context);
-                splashImageView.setImageResource(drawableId);
-                LayoutParams layoutParams = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-                splashImageView.setLayoutParams(layoutParams);
+               splashImageView.setMinimumHeight(display.getHeight());
+               splashImageView.setMinimumWidth(display.getWidth());
 
-                splashImageView.setMinimumHeight(display.getHeight());
-                splashImageView.setMinimumWidth(display.getWidth());
+               // TODO: Use the background color of the webView's parent instead of using the preference.
+               splashImageView.setBackgroundColor(preferences.getInteger("backgroundColor", Color.BLACK));
 
-                // TODO: Use the background color of the webView's parent instead of using the preference.
-                splashImageView.setBackgroundColor(preferences.getInteger("backgroundColor", Color.BLACK));
+               if (isMaintainAspectRatio()) {
+                  // CENTER_CROP scale mode is equivalent to CSS "background-size:cover"
+                  splashImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+               }
+               else {
+                  // FIT_XY scales image non-uniformly to fit into image view.
+                  splashImageView.setScaleType(ImageView.ScaleType.FIT_XY);
+               }
 
-                if (isMaintainAspectRatio()) {
-                    // CENTER_CROP scale mode is equivalent to CSS "background-size:cover"
-                    splashImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                }
-                else {
-                    // FIT_XY scales image non-uniformly to fit into image view.
-                    splashImageView.setScaleType(ImageView.ScaleType.FIT_XY);
-                }
+               // Create and show the dialog
+               splashDialog = new Dialog(context, android.R.style.Theme_Translucent_NoTitleBar);
+               // check to see if the splash screen should be full screen
+               if ((cordova.getActivity().getWindow().getAttributes().flags & WindowManager.LayoutParams.FLAG_FULLSCREEN)
+                     == WindowManager.LayoutParams.FLAG_FULLSCREEN) {
+                  splashDialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                        WindowManager.LayoutParams.FLAG_FULLSCREEN);
+               }
 
-                // Create and show the dialog
-                splashDialog = new Dialog(context, android.R.style.Theme_Translucent_NoTitleBar);
-                // check to see if the splash screen should be full screen
-                if ((cordova.getActivity().getWindow().getAttributes().flags & WindowManager.LayoutParams.FLAG_FULLSCREEN)
-                        == WindowManager.LayoutParams.FLAG_FULLSCREEN) {
-                    splashDialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                            WindowManager.LayoutParams.FLAG_FULLSCREEN);
-                }
-                splashDialog.setContentView(splashImageView);
-                splashDialog.setCancelable(false);
-                splashDialog.show();
+               // if not first launch, fade in the splash
+               if( webView.getUrl() != null && webView.getUrl().length() > 0 )
+               {
+                  final int fadeSplashScreenDuration = getFadeDuration();
+                  if (fadeSplashScreenDuration > 0) {
+                     AlphaAnimation fadeIn = new AlphaAnimation(0, 1);
+                     fadeIn.setInterpolator(new AccelerateInterpolator( ));
+                     fadeIn.setDuration(fadeSplashScreenDuration);
 
-                // Set Runnable to remove splash screen just in case
-                if (hideAfterDelay) {
-                    final Handler handler = new Handler();
-                    handler.postDelayed(new Runnable() {
-                        public void run() {
-                            removeSplashScreen();
+                     splashImageView.setAnimation(fadeIn);
+                     splashImageView.startAnimation(fadeIn);
+
+                     fadeIn.setAnimationListener(new Animation.AnimationListener() {
+                        @Override
+                        public void onAnimationStart(Animation animation) {
+
                         }
-                    }, effectiveSplashDuration);
-                }
+
+                        @Override
+                        public void onAnimationEnd(Animation animation) {
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animation animation) {
+                        }
+                     });
+                  }
+               }
+               splashDialog.setContentView(splashImageView);
+               splashDialog.setCancelable(false);
+               splashDialog.show();
+
+               // Set Runnable to remove splash screen just in case
+               if (hideAfterDelay) {
+                  final Handler handler = new Handler();
+                  handler.postDelayed(new Runnable() {
+                     public void run() {
+                        removeSplashScreen();
+                     }
+                  }, effectiveSplashDuration);
+               }
+
+
             }
         });
     }
 
-    /*
-     * Load the spinner
-     */
+   /*
+    * Load the spinner
+    */
     private void loadSpinner() {
         // If loadingDialog property, then show the App loading dialog for first page of app
         String loading = null;
