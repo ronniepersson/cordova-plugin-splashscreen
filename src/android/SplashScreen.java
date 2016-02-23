@@ -41,7 +41,6 @@ import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CordovaWebView;
 import org.json.JSONArray;
 import org.json.JSONException;
-import se.letsdeal.letsdealtravel.R;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +54,7 @@ public class SplashScreen extends CordovaPlugin {
    private static Dialog splashDialog;
    private static ProgressDialog spinnerDialog;
    private static boolean firstShow = true;
+   private static int themeResourceId = -1;
 
    /**
     * Displays the splash drawable.
@@ -297,6 +297,11 @@ public class SplashScreen extends CordovaPlugin {
       return preferences.getInteger("SplashDrawableId" + randomId, 0);
    }
 
+   public static void setThemeResourceId( int resId )
+   {
+      themeResourceId = resId;
+   }
+
    /**
     * Shows the splash screen over the full Activity
     */
@@ -343,7 +348,7 @@ public class SplashScreen extends CordovaPlugin {
             }
 
             // Create and show the dialog
-            splashDialog = new Dialog(context, R.style.TranslucentSplash);
+            splashDialog = new Dialog(context, themeResourceId != -1 ?themeResourceId : android.R.style.Theme_Translucent_NoTitleBar );
             // check to see if the splash screen should be full screen
             if ((cordova.getActivity().getWindow().getAttributes().flags & WindowManager.LayoutParams.FLAG_FULLSCREEN)
                   == WindowManager.LayoutParams.FLAG_FULLSCREEN) {
