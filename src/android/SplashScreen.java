@@ -293,8 +293,9 @@ public class SplashScreen extends CordovaPlugin {
       int splashCount = preferences.getInteger("SplashDrawableCount", 0 );
       if( splashCount == 0 )
          return 0;
-      int randomId = ( int ) (Math.random() * splashCount + 0.5 );
-      return preferences.getInteger("SplashDrawableId" + randomId, 0);
+      int randomId = ( int ) (Math.random() * (splashCount - 1));
+      int resId = preferences.getInteger( "SplashDrawableId" + randomId, 0 );
+      return resId;
    }
 
    public static void setThemeResourceId( int resId )
